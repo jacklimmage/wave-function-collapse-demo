@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import colors
 from matplotlib.widgets import TextBox, Button
+import sys
 
 # ANSI escape codes for colours
 class Colours:
@@ -220,10 +221,23 @@ def main():
         ani = animation.FuncAnimation(fig, animate, frames=24, interval=100, blit=True)
         plt.show()
 
+    plt.close()
+
 def handle_input(grid):
 
+    def display_warning():
+        text = "Hello, World!"
+        plt.text(0.5, 0.5, text, ha='center', va='center')
+
     def update_rows(text):
-        grid.numRows = int(text)
+        try:
+            numRows = int(text)
+            if numRows > 0:
+                grid.numRows = numRows
+            else: 
+                display_warning()
+        except ValueError:
+            print("Please enter an integer")
 
     def update_cols(text):
         grid.numCols = int(text)
@@ -263,7 +277,9 @@ def handle_input(grid):
 
     plt.show()
     while not button.buttonPressed:
-        pass
+        if not plt.fignum_exists(1):  # Check if the figure window is closed
+            sys.exit()
+        plt.pause(0.1)
 
 if __name__ == "__main__":
     main()
