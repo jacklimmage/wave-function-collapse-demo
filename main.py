@@ -5,6 +5,7 @@ from matplotlib import colors
 from matplotlib.widgets import TextBox, Button
 import sys
 
+
 # ANSI escape codes for colours
 class Colours:
     RESET = '\033[0m'
@@ -120,6 +121,10 @@ class Grid:
                 terrain = random.choice(availTerrains)
 
         self.superpositionGrid[y][x].collapse(terrain)
+        # self.entropyGrid = []
+        # self.entropyDict = {}
+        # self.get_entropy_grid()
+        # self.get_entropy_dict()
 
         colourDict = {
             'W': 1,
@@ -138,7 +143,18 @@ class Grid:
             for i in range(minX, maxX + 1):
                 if j == y and i == x:
                     continue
-                self.superpositionGrid[j][i].semi_collapse(terrain)
+                # spawn water opposite grass
+                # if terrain == 's': # sand at (x, y)
+                #     if self.mapGrid[j][i] == 4: # grass at (i, j)
+                #         wi = min(maxX, max(minX, 2 * x - i))
+                #         wj = min(maxY, max(minY, 2 * y - j))
+                #         self.update_cell(['w', wi, wj])
+                #     if self.mapGrid[j][i] == 2: # water at (i, j)
+                #         gi = min(len(self.mapGrid[0]), max(0, 2 * x - i))
+                #         gj = min(len(self.mapGrid), max(0, 2 * y - j))
+                #         self.update_cell(['g', gi, gj])
+                else:
+                    self.superpositionGrid[j][i].semi_collapse(terrain)
 
     def get_entropy_grid(self):
         self.entropyGrid = [[len(cell.availTerrains) for cell in row] for row in self.superpositionGrid]
