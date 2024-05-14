@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 from matplotlib import colors
 from matplotlib.widgets import TextBox, Button
 import sys
-
+import math
 
 # ANSI escape codes for colours
 class Colours:
@@ -22,34 +22,53 @@ class TerrainList:
     def __init__(self) -> None:
         self.availTerrains = ['M', 'm', 'g', 's', 'w', 'W']
 
-    def semi_collapse(self, terrain):
+    def semi_collapse(self, terrain, radius):
         allTerrains = ['M', 'm', 'g', 's', 'w', 'W']
+        M_remove = {1: ['g', 's', 'w', 'W'],
+                  2: ['s', 'w', 'W'],
+                  3: ['w', 'W'],
+                  4: ['W'],
+                  5: []}
+        m_remove = {1: ['s', 'w', 'W'],
+                  2: ['w', 'W'],
+                  3: ['w'],
+                  4: [], 
+                  5: []}
+        g_remove = {1: ['M', 'w', 'W'],
+                  2: ['W'],
+                  3: [],
+                  4: [], 
+                  5: []}
+        s_remove = {1: ['M', 'm', 'W'],
+                  2: ['M'],
+                  3: [],
+                  4: [], 
+                  5: []}
+        w_remove = {1: ['M', 'm', 'g'],
+                  2: ['M', 'm'],
+                  3: ['M'],
+                  4: [], 
+                  5: []}
+        W_remove = {1: ['M', 'm', 'g', 's'],
+                  2: ['M', 'm', 'g'],
+                  3: ['M', 'm'],
+                  4: ['M'],
+                  5: []}
+        
         match terrain:
-            case 'M': 
-                for char in allTerrains:
-                    if char not in ['M', 'm'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-            case 'm':
-                for char in allTerrains:
-                    if char not in ['M', 'm', 'g'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-            case 'g':
-                for char in allTerrains:
-                    if char not in ['m', 'g', 's'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-            case 's':
-                for char in allTerrains:
-                    if char not in ['g', 's', 'w'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-            case 'w':
-                for char in allTerrains:
-                    if char not in ['s', 'w', 'W'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-            case 'W':
-                for char in allTerrains:
-                    if char not in ['w', 'W'] and char in self.availTerrains:
-                        self.availTerrains.remove(char)
-    
+            case 'M': self.availTerrains = [x for x in allTerrains 
+                                            if x not in M_remove[radius]]
+            case 'm': self.availTerrains = [x for x in allTerrains 
+                                            if x not in m_remove[radius]]
+            case 'g': self.availTerrains = [x for x in allTerrains 
+                                            if x not in g_remove[radius]]
+            case 's': self.availTerrains = [x for x in allTerrains 
+                                            if x not in s_remove[radius]]
+            case 'w': self.availTerrains = [x for x in allTerrains 
+                                            if x not in w_remove[radius]]
+            case 'W': self.availTerrains = [x for x in allTerrains 
+                                            if x not in W_remove[radius]]
+
     def collapse(self, terrain):
         self.availTerrains = [terrain]
 
@@ -63,6 +82,60 @@ class Grid:
         self.mapGrid = []
         self.entropyGrid = []
         self.entropyDict = {}
+
+    def collapse(self, terrain, x, y):
+        colourDict = {
+            'W': 1,
+            'w': 2,
+            's': 3,
+            'g': 4,
+            'm': 5,
+            'M': 6,
+        }
+        self.mapGrid[y][x] = colourDict[terrain]
+        
+        minX = max(0, x - 5)
+        maxX = min(len(self.mapGrid[0]) - 1, x + 5)
+        minY = max(0, y - 5)
+        maxY = min(len(self.mapGrid) - 1, y + 5)
+
+        print(minX, maxX)
+
+        for j in range(minY, maxY + 1):
+            for i in range(minX, maxX + 1):
+                if j == y and i == x:
+                    self.superpositionGrid[y][x].collapse(terrain)
+                else:
+                    radius = max(abs(j - y), abs(i - x))
+                    self.superpositionGrid[j][i].semi_collapse(terrain, radius)
+                self.get_entropy_grid()
+                self.get_entropy_dict()
+
+    def update_cell(self, target=None):
+        self.get_entropy_grid()
+        self.get_entropy_dict()
+        coords = self.get_lowest_entropy()
+
+        if target and self.entropyGrid[target[2]][target[1]] > 1 and target[0] in self.superpositionGrid[target[2]][target[1]].availTerrains:
+            x = target[1]
+            y = target[2]
+            terrain = target[0]
+        else:
+            x = coords[0]
+            y = coords[1]
+            availTerrains = self.superpositionGrid[y][x].availTerrains
+            terrain = random.choice(availTerrains)
+
+            # implement weighting in favour of grass and away from extremes
+            if terrain == 'M':
+                terrain = random.choice(availTerrains)
+            elif terrain == 'W':
+                terrain = random.choice(availTerrains)
+            elif 'g' in availTerrains and terrain != 'g':
+                terrain = random.choice(availTerrains)
+        
+        if self.entropyGrid[y][x] > 1:        
+            self.collapse(terrain, x, y)
 
     def get_entropy_dict(self):
         self.entropyDict = {}
@@ -94,67 +167,6 @@ class Grid:
                         toPrint += Colours.WHITE
                 toPrint += "\u2588\u2588" + Colours.RESET
             print(toPrint)
-
-    def update_cell(self, target=None):
-        self.entropyGrid = []
-        self.entropyDict = {}
-        self.get_entropy_grid()
-        self.get_entropy_dict()
-        coords = self.get_lowest_entropy()
-
-        if target and self.entropyGrid[target[2]][target[1]] > 1:
-            x = target[1]
-            y = target[2]
-            terrain = target[0]
-        else:
-            x = coords[0]
-            y = coords[1]
-            availTerrains = self.superpositionGrid[y][x].availTerrains
-            terrain = random.choice(availTerrains)
-
-            # implement weighting in favour of grass and away from extremes
-            if terrain == 'M':
-                terrain = random.choice(availTerrains)
-            elif terrain == 'W':
-                terrain = random.choice(availTerrains)
-            elif 'g' in availTerrains and terrain != 'g':
-                terrain = random.choice(availTerrains)
-
-        self.superpositionGrid[y][x].collapse(terrain)
-        # self.entropyGrid = []
-        # self.entropyDict = {}
-        # self.get_entropy_grid()
-        # self.get_entropy_dict()
-
-        colourDict = {
-            'W': 1,
-            'w': 2,
-            's': 3,
-            'g': 4,
-            'm': 5,
-            'M': 6,
-        }
-        self.mapGrid[y][x] = colourDict[terrain]
-        minX = max(0, x - 1)
-        maxX = min(len(self.mapGrid[0]) - 1, x + 1)
-        minY = max(0, y - 1)
-        maxY = min(len(self.mapGrid) - 1, y + 1)
-        for j in range(minY, maxY + 1):
-            for i in range(minX, maxX + 1):
-                if j == y and i == x:
-                    continue
-                # spawn water opposite grass
-                # if terrain == 's': # sand at (x, y)
-                #     if self.mapGrid[j][i] == 4: # grass at (i, j)
-                #         wi = min(maxX, max(minX, 2 * x - i))
-                #         wj = min(maxY, max(minY, 2 * y - j))
-                #         self.update_cell(['w', wi, wj])
-                #     if self.mapGrid[j][i] == 2: # water at (i, j)
-                #         gi = min(len(self.mapGrid[0]), max(0, 2 * x - i))
-                #         gj = min(len(self.mapGrid), max(0, 2 * y - j))
-                #         self.update_cell(['g', gi, gj])
-                else:
-                    self.superpositionGrid[j][i].semi_collapse(terrain)
 
     def get_entropy_grid(self):
         self.entropyGrid = [[len(cell.availTerrains) for cell in row] for row in self.superpositionGrid]
@@ -260,7 +272,7 @@ def main():
                 img.set_array(updatedMap)
             return img,
         
-        interval = 10000 / (grid.numRows * grid.numCols) #ms
+        interval = 1000 / (grid.numRows * grid.numCols) #ms
         ani = animation.FuncAnimation(fig, animate, frames=24, interval=interval, blit=True)
         plt.show()
 
