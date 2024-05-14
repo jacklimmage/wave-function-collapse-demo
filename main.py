@@ -54,9 +54,9 @@ class TerrainList:
 
 class Grid:
     def __init__(self) -> None:
-        self.numRows = 0
-        self.numCols = 0
-        self.numMaps = 0
+        self.numRows = 10
+        self.numCols = 10
+        self.numMaps = 1
 
         self.superpositionGrid = []
         self.mapGrid = []
@@ -226,8 +226,8 @@ def main():
 def handle_input(grid):
 
     def display_warning():
-        text = "Hello, World!"
-        plt.text(0.5, 0.5, text, ha='center', va='center')
+        startButton.hovercolor = 'r'
+        buttonObj.canBePressed = False
 
     def update_rows(text):
         try:
@@ -245,41 +245,44 @@ def handle_input(grid):
     def update_maps(text):
         grid.numMaps = int(text)
 
-    ax_numrows = plt.axes([0.9, 0.7, 0.1, 0.03])  # [left, bottom, width, height]
-    textbox_numrows = TextBox(ax_numrows, 'Num Rows', initial='10')
-    update_rows(10)
-    textbox_numrows.on_submit(update_rows)
+    plt.rcParams['toolbar'] = 'None'
+    fig = plt.figure("Enter Parameters", (3,2)) # (width, height)
+    
 
-    ax_numcols = plt.axes([0.85, 0.65, 0.1, 0.03])  # [left, bottom, width, height]
-    textbox_numcols = TextBox(ax_numcols, 'Num Cols', initial='10')
-    update_cols(10)
-    textbox_numcols.on_submit(update_cols)
+    axNumRows = plt.axes([0.5, 0.75, 0.2, 0.1])  # [left, bottom, width, height]
+    textboxNumRows = TextBox(axNumRows, 'Num Rows: ', initial='10')
+    textboxNumRows.on_submit(update_rows)
 
-    ax_custom = plt.axes([0.85, 0.6, 0.1, 0.03])  # [left, bottom, width, height]
-    textbox_custom = TextBox(ax_custom, 'Num Maps', initial='1')
-    update_maps(1)
-    textbox_custom.on_submit(update_maps)
+    axNumCols = plt.axes([0.5, 0.6, 0.2, 0.1])  # [left, bottom, width, height]
+    textboxNumCols = TextBox(axNumCols, 'Num Cols: ', initial='10')
+    textboxNumCols.on_submit(update_cols)
+
+    axNumMaps = plt.axes([0.5, 0.45, 0.2, 0.1])  # [left, bottom, width, height]
+    textboxNumMaps = TextBox(axNumMaps, 'Num Maps: ', initial='1')
+    textboxNumMaps.on_submit(update_maps)
 
     # Function to start the animation when the button is clicked
     class buttonHandler:
         def __init__(self) -> None:
             self.buttonPressed = False
+            self.canBePressed = True
 
-    button = buttonHandler()
+    buttonObj = buttonHandler()
     def start_animation(event):
-        button.buttonPressed = True
-        plt.close()
+        if buttonObj.canBePressed:
+            buttonObj.buttonPressed = True
+            plt.close()
 
     # Add a button to start the animation
-    button_ax = plt.axes([0.85, 0.1, 0.1, 0.05])  # [left, bottom, width, height]
-    start_button = Button(button_ax, 'Start')
-    start_button.on_clicked(start_animation)
+    axButton = plt.axes([0.5, 0.3, 0.2, 0.1])  # [left, bottom, width, height]
+    startButton = Button(axButton, 'Start')
+    startButton.hovercolor = 'g'
+    startButton.on_clicked(start_animation)
 
     plt.show()
-    while not button.buttonPressed:
+    while not buttonObj.buttonPressed:
         if not plt.fignum_exists(1):  # Check if the figure window is closed
             sys.exit()
-        plt.pause(0.1)
 
 if __name__ == "__main__":
     main()
