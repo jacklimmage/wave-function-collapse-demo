@@ -223,7 +223,8 @@ def main():
                 img.set_array(updatedMap)
             return img,
         
-        interval = grid.numRows * grid.numCols #ms
+        interval = 10000 / (grid.numRows * grid.numCols) #ms
+        print(interval)
         ani = animation.FuncAnimation(fig, animate, frames=24, interval=interval, blit=True)
         plt.show()
 
