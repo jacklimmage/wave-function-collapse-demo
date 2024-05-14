@@ -207,7 +207,12 @@ def main():
         cmap = colors.ListedColormap(['k', 'b', 'c', 'y', 'g', '0.5', '1'])
         bounds = [0, 1, 2, 3, 4, 5, 6, 7]
         norm = colors.BoundaryNorm(bounds, cmap.N)
+        plt.rcParams['toolbar'] = 'toolbar2'
+
         fig, ax = plt.subplots()
+        mng = plt.get_current_fig_manager()
+        mng.window.showMaximized()
+        
         ax.axis('off')
         img = plt.imshow(grid.mapGrid, animated=True, cmap=cmap, norm=norm)
         
@@ -218,36 +223,58 @@ def main():
                 img.set_array(updatedMap)
             return img,
         
-        ani = animation.FuncAnimation(fig, animate, frames=24, interval=100, blit=True)
+        interval = grid.numRows * grid.numCols #ms
+        ani = animation.FuncAnimation(fig, animate, frames=24, interval=interval, blit=True)
         plt.show()
 
     plt.close()
 
 def handle_input(grid):
 
-    def display_warning():
-        startButton.hovercolor = 'r'
-        buttonObj.canBePressed = False
-
     def update_rows(text):
         try:
             numRows = int(text)
             if numRows > 0:
                 grid.numRows = numRows
+                buttonObj.rowsValid = True
+                buttonObj.tryButtonToggle(startButton, True)
             else: 
-                display_warning()
+                buttonObj.tryButtonToggle(startButton, False)
+                buttonObj.rowsValid = False
         except ValueError:
-            print("Please enter an integer")
+            buttonObj.tryButtonToggle(startButton, False)
+            buttonObj.rowsValid = False
 
     def update_cols(text):
-        grid.numCols = int(text)
+        try:
+            numCols = int(text)
+            if numCols > 0:
+                grid.numCols = numCols
+                buttonObj.colsValid = True
+                buttonObj.tryButtonToggle(startButton, True)
+            else: 
+                buttonObj.tryButtonToggle(startButton, False)
+                buttonObj.rowsValid = False
+        except ValueError:
+            buttonObj.tryButtonToggle(startButton, False)
+            buttonObj.colsValid = False
 
     def update_maps(text):
-        grid.numMaps = int(text)
+        try:
+            numMaps = int(text)
+            if numMaps > 0:
+                grid.numMaps = numMaps
+                buttonObj.mapsValid = True
+                buttonObj.tryButtonToggle(startButton, True)
+            else: 
+                buttonObj.tryButtonToggle(startButton, False)
+                buttonObj.mapsValid = False
+        except ValueError:
+            buttonObj.tryButtonToggle(startButton, False)
+            buttonObj.mapsValid = False
 
     plt.rcParams['toolbar'] = 'None'
     fig = plt.figure("Enter Parameters", (3,2)) # (width, height)
-    
 
     axNumRows = plt.axes([0.5, 0.75, 0.2, 0.1])  # [left, bottom, width, height]
     textboxNumRows = TextBox(axNumRows, 'Num Rows: ', initial='10')
@@ -263,20 +290,32 @@ def handle_input(grid):
 
     # Function to start the animation when the button is clicked
     class buttonHandler:
-        def __init__(self) -> None:
+        def __init__(self, startButton) -> None:
             self.buttonPressed = False
-            self.canBePressed = True
+            self.rowsValid = True
+            self.colsValid = True
+            self.mapsValid = True
+            self.tryButtonToggle(startButton, True)
+        
+        def tryButtonToggle(self, startButton, to):
+            if not to:
+                self.canBePressed = False
+                startButton.hovercolor = 'r'
+            else:
+                if self.rowsValid and self.colsValid and self.mapsValid:
+                    self.canBePressed = True
+                    startButton.hovercolor = 'g'
 
-    buttonObj = buttonHandler()
+    # Add a button to start the animation
+    axButton = plt.axes([0.5, 0.3, 0.2, 0.1])  # [left, bottom, width, height]
+    startButton = Button(axButton, 'Start')
+
+    buttonObj = buttonHandler(startButton)
     def start_animation(event):
         if buttonObj.canBePressed:
             buttonObj.buttonPressed = True
             plt.close()
 
-    # Add a button to start the animation
-    axButton = plt.axes([0.5, 0.3, 0.2, 0.1])  # [left, bottom, width, height]
-    startButton = Button(axButton, 'Start')
-    startButton.hovercolor = 'g'
     startButton.on_clicked(start_animation)
 
     plt.show()
