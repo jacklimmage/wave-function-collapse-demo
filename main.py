@@ -111,16 +111,13 @@ class Grid:
             availTerrains = self.superpositionGrid[y][x].availTerrains
             terrain = random.choice(availTerrains)
 
-        # check if sand placed next to grass to place water opposite
-        if terrain == 's':
-            minX = max(0, x - 1)
-            maxX = min(len(self.mapGrid[0]) - 1, x + 1)
-            minY = max(0, y - 1)
-            maxY = min(len(self.mapGrid) - 1, y + 1)
-            for j in range(minY, maxY + 1):
-                for i in range(minX, maxX + 1):
-                    if self.mapGrid[j][i] == 4:
-                        self.update_cell(['w', 2*x - i, 2*y - j]) # fill with coords opposite to the 4
+            # implement weighting in favour of grass and away from extremes
+            if terrain == 'M':
+                terrain = random.choice(availTerrains)
+            elif terrain == 'W':
+                terrain = random.choice(availTerrains)
+            elif 'g' in availTerrains and terrain != 'g':
+                terrain = random.choice(availTerrains)
 
         self.superpositionGrid[y][x].collapse(terrain)
 
@@ -248,7 +245,6 @@ def main():
             return img,
         
         interval = 10000 / (grid.numRows * grid.numCols) #ms
-        print(interval)
         ani = animation.FuncAnimation(fig, animate, frames=24, interval=interval, blit=True)
         plt.show()
 
