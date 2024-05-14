@@ -197,7 +197,7 @@ class Grid:
 
 def main():
     grid = Grid()
-    grid.handle_input()
+    handle_input(grid)
 
     for i in range(grid.numMaps):
         grid.initialise_superposition_grid()
@@ -207,35 +207,9 @@ def main():
         bounds = [0, 1, 2, 3, 4, 5, 6, 7]
         norm = colors.BoundaryNorm(bounds, cmap.N)
         fig, ax = plt.subplots()
+        ax.axis('off')
         img = plt.imshow(grid.mapGrid, animated=True, cmap=cmap, norm=norm)
-
-        def update_text(text):
-            pass
-
-        ax_numrows = plt.axes([0.9, 0.7, 0.1, 0.03])  # [left, bottom, width, height]
-        textbox_numrows = TextBox(ax_numrows, 'Num Rows', initial='10')
-        textbox_numrows.on_submit(update_text)
-
-        ax_numcols = plt.axes([0.85, 0.65, 0.1, 0.03])  # [left, bottom, width, height]
-        textbox_numcols = TextBox(ax_numcols, 'Num Cols', initial='10')
-        textbox_numcols.on_submit(update_text)
-
-        ax_custom = plt.axes([0.85, 0.6, 0.1, 0.03])  # [left, bottom, width, height]
-        textbox_custom = TextBox(ax_custom, 'Custom Text', initial='Custom')
-        textbox_custom.on_submit(update_text)
-
-        # Add a button to start the animation
-        button_ax = plt.axes([0.85, 0.1, 0.1, 0.05])  # [left, bottom, width, height]
-        start_button = Button(button_ax, 'Start')
-
-        # Function to start the animation when the button is clicked
-        class buttonHandler:
-            def __init__(self) -> None:
-                self.buttonPressed = False
-        button = buttonHandler()
-        def start_animation(event):
-            button.buttonPressed = True
-
+        
         def animate(i):
             if not grid.wave_function_collapsed():
                 grid.update_cell()
@@ -245,6 +219,51 @@ def main():
         
         ani = animation.FuncAnimation(fig, animate, frames=24, interval=100, blit=True)
         plt.show()
+
+def handle_input(grid):
+
+    def update_rows(text):
+        grid.numRows = int(text)
+
+    def update_cols(text):
+        grid.numCols = int(text)
+
+    def update_maps(text):
+        grid.numMaps = int(text)
+
+    ax_numrows = plt.axes([0.9, 0.7, 0.1, 0.03])  # [left, bottom, width, height]
+    textbox_numrows = TextBox(ax_numrows, 'Num Rows', initial='10')
+    update_rows(10)
+    textbox_numrows.on_submit(update_rows)
+
+    ax_numcols = plt.axes([0.85, 0.65, 0.1, 0.03])  # [left, bottom, width, height]
+    textbox_numcols = TextBox(ax_numcols, 'Num Cols', initial='10')
+    update_cols(10)
+    textbox_numcols.on_submit(update_cols)
+
+    ax_custom = plt.axes([0.85, 0.6, 0.1, 0.03])  # [left, bottom, width, height]
+    textbox_custom = TextBox(ax_custom, 'Num Maps', initial='1')
+    update_maps(1)
+    textbox_custom.on_submit(update_maps)
+
+    # Function to start the animation when the button is clicked
+    class buttonHandler:
+        def __init__(self) -> None:
+            self.buttonPressed = False
+
+    button = buttonHandler()
+    def start_animation(event):
+        button.buttonPressed = True
+        plt.close()
+
+    # Add a button to start the animation
+    button_ax = plt.axes([0.85, 0.1, 0.1, 0.05])  # [left, bottom, width, height]
+    start_button = Button(button_ax, 'Start')
+    start_button.on_clicked(start_animation)
+
+    plt.show()
+    while not button.buttonPressed:
+        pass
 
 if __name__ == "__main__":
     main()
