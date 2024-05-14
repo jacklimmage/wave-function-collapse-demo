@@ -55,7 +55,7 @@ class TerrainList:
 class Grid:
     def __init__(self) -> None:
         self.numRows = 10
-        self.numCols = 10
+        self.numCols = 20
         self.numMaps = 1
 
         self.superpositionGrid = []
@@ -204,7 +204,13 @@ def main():
         grid.initialise_superposition_grid()
         grid.initialise_map()
 
-        cmap = colors.ListedColormap(['k', 'b', 'c', 'y', 'g', '0.5', '1'])
+        cmap = colors.ListedColormap(['#000000', # black
+                                      '#1E90FF', # blue
+                                      '#00C5CD', # cyan
+                                      '#FFE37E', # yellow
+                                      '#639E51', # green
+                                      '#808080', # grey
+                                      '#FFFFFF']) # white
         bounds = [0, 1, 2, 3, 4, 5, 6, 7]
         norm = colors.BoundaryNorm(bounds, cmap.N)
         plt.rcParams['toolbar'] = 'toolbar2'
@@ -282,7 +288,7 @@ def handle_input(grid):
     textboxNumRows.on_submit(update_rows)
 
     axNumCols = plt.axes([0.5, 0.6, 0.2, 0.1])  # [left, bottom, width, height]
-    textboxNumCols = TextBox(axNumCols, 'Num Cols: ', initial='10')
+    textboxNumCols = TextBox(axNumCols, 'Num Cols: ', initial='20')
     textboxNumCols.on_submit(update_cols)
 
     axNumMaps = plt.axes([0.5, 0.45, 0.2, 0.1])  # [left, bottom, width, height]
