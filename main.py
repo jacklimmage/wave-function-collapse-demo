@@ -94,15 +94,36 @@ class Grid:
                 toPrint += "\u2588\u2588" + Colours.RESET
             print(toPrint)
 
-    def update_cell(self):
+    def update_cell(self, target=None):
         self.entropyGrid = []
         self.entropyDict = {}
         self.get_entropy_grid()
         self.get_entropy_dict()
         coords = self.get_lowest_entropy()
 
-        x = coords[0]
-        y = coords[1]
+        if target and self.entropyGrid[target[2]][target[1]] > 1:
+            x = target[1]
+            y = target[2]
+            terrain = target[0]
+        else:
+            x = coords[0]
+            y = coords[1]
+            availTerrains = self.superpositionGrid[y][x].availTerrains
+            terrain = random.choice(availTerrains)
+
+        # check if sand placed next to grass to place water opposite
+        if terrain == 's':
+            minX = max(0, x - 1)
+            maxX = min(len(self.mapGrid[0]) - 1, x + 1)
+            minY = max(0, y - 1)
+            maxY = min(len(self.mapGrid) - 1, y + 1)
+            for j in range(minY, maxY + 1):
+                for i in range(minX, maxX + 1):
+                    if self.mapGrid[j][i] == 4:
+                        self.update_cell(['w', 2*x - i, 2*y - j]) # fill with coords opposite to the 4
+
+        self.superpositionGrid[y][x].collapse(terrain)
+
         colourDict = {
             'W': 1,
             'w': 2,
@@ -111,9 +132,6 @@ class Grid:
             'm': 5,
             'M': 6,
         }
-        availTerrains = self.superpositionGrid[y][x].availTerrains
-        terrain = random.choice(availTerrains)
-        self.superpositionGrid[y][x].collapse(terrain)
         self.mapGrid[y][x] = colourDict[terrain]
         minX = max(0, x - 1)
         maxX = min(len(self.mapGrid[0]) - 1, x + 1)
